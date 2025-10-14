@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { type Role } from '../lib/supabase';
+import { type Role, type Room } from '../lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Users } from 'lucide-react';
+import { Users, ArrowLeft } from 'lucide-react';
 
 interface JoinRoomProps {
+  room: Room;
   onJoin: (name: string, role: Role) => void;
+  onBack: () => void;
 }
 
-export function JoinRoom({ onJoin }: JoinRoomProps) {
+export function JoinRoom({ room, onJoin, onBack }: JoinRoomProps) {
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('front-end');
 
@@ -29,7 +31,7 @@ export function JoinRoom({ onJoin }: JoinRoomProps) {
           <div className="mx-auto w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-2">
             <Users className="w-6 h-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold">Scrum Poker</CardTitle>
+          <CardTitle className="text-2xl font-bold">{room.name}</CardTitle>
           <CardDescription>Join your team's estimation session</CardDescription>
         </CardHeader>
         <CardContent>
@@ -58,9 +60,20 @@ export function JoinRoom({ onJoin }: JoinRoomProps) {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="w-full" size="lg">
-              Join Room
-            </Button>
+            <div className="space-y-2">
+              <Button type="submit" className="w-full" size="lg">
+                Join Room
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onBack}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Lobby
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

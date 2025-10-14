@@ -1,7 +1,10 @@
 import { type Participant, type Vote, type RoomState } from '../../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { TrendingUp } from 'lucide-react';
+import { Button } from '../ui/button';
+import { TrendingUp, Copy } from 'lucide-react';
+import { formatTimeEstimation } from '../../lib/session';
+import { toast } from 'sonner';
 
 interface ResultsProps {
   participants: Participant[];
@@ -47,6 +50,51 @@ export function Results({ participants, votes, roomState }: ResultsProps) {
     return sum / votes.length;
   };
 
+  const calculateDevAverage = () => {
+    const devRoles = ['front-end', 'back-end'];
+    const devParticipants = participants.filter((p) => devRoles.includes(p.role));
+    const devVotes = votes.filter((v) =>
+      devParticipants.some((p) => p.id === v.participant_id)
+    );
+
+    if (devVotes.length === 0) return null;
+
+    const feAvg = calculateAdjustedAverage('front-end') || 0;
+    const beAvg = calculateAdjustedAverage('back-end') || 0;
+    const feCount = votes.filter((v) =>
+      participants.some((p) => p.id === v.participant_id && p.role === 'front-end')
+    ).length;
+    const beCount = votes.filter((v) =>
+      participants.some((p) => p.id === v.participant_id && p.role === 'back-end')
+    ).length;
+
+    if (feCount === 0 && beCount === 0) return null;
+    if (feCount === 0) return beAvg;
+    if (beCount === 0) return feAvg;
+
+    return (feAvg + beAvg) / 2;
+  };
+
+  const calculateQAAverage = () => {
+    return calculateAdjustedAverage('QA');
+  };
+
+  const handleCopyEstimation = () => {
+    const devAvg = calculateDevAverage();
+    const qaAvg = calculateQAAverage();
+
+    const devTime = devAvg ? formatTimeEstimation(devAvg) : '0:00';
+    const qaTime = qaAvg ? formatTimeEstimation(qaAvg) : '0:00';
+
+    const text = `Development time estimation: ${devTime}\nQA time estimation: ${qaTime}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success('Estimation copied to clipboard');
+    }).catch(() => {
+      toast.error('Failed to copy to clipboard');
+    });
+  };
+
   const roles = ['front-end', 'back-end', 'QA', 'PM'];
 
   const roleLabels = {
@@ -63,19 +111,65 @@ export function Results({ participants, votes, roomState }: ResultsProps) {
     'PM': 'bg-purple-100 text-purple-800 border-purple-300',
   };
 
+  const devAvg = calculateDevAverage();
+  const qaAvg = calculateQAAverage();
+
   return (
     <div className="space-y-4">
-      <Card className="border-2 border-blue-200 bg-blue-50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            Overall Average
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold text-blue-600">
-            {overallAverage().toFixed(1)} points
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-2 border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              Overall Average
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold text-blue-600">
+              {overallAverage().toFixed(1)} points
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-green-200 bg-green-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              Development Average
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold text-green-600">
+              {devAvg ? devAvg.toFixed(1) : '0'} points
+            </p>
+            <p className="text-sm text-green-700 mt-2">
+              Time: {devAvg ? formatTimeEstimation(devAvg) : '0:00'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-orange-200 bg-orange-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              QA Average
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold text-orange-600">
+              {qaAvg ? qaAvg.toFixed(1) : '0'} points
+            </p>
+            <p className="text-sm text-orange-700 mt-2">
+              Time: {qaAvg ? formatTimeEstimation(qaAvg) : '0:00'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-2 border-slate-200">
+        <CardContent className="pt-6">
+          <Button onClick={handleCopyEstimation} className="w-full" size="lg">
+            <Copy className="w-4 h-4 mr-2" />
+            Copy Time Estimation
+          </Button>
         </CardContent>
       </Card>
 

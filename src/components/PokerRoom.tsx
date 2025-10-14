@@ -1,4 +1,4 @@
-import { type Participant, type Vote, type RoomState } from '../lib/supabase';
+import { type Participant, type Vote, type RoomState, type Room } from '../lib/supabase';
 import { Header } from './poker/Header';
 import { ParticipantsList } from './poker/ParticipantsList';
 import { VotingCards } from './poker/VotingCards';
@@ -7,18 +7,19 @@ import { PMControls } from './poker/PMControls';
 
 interface PokerRoomProps {
   currentUser: Participant;
+  room: Room;
   participants: Participant[];
   votes: Vote[];
   roomState: RoomState | null;
   onLeave: () => void;
 }
 
-export function PokerRoom({ currentUser, participants, votes, roomState, onLeave }: PokerRoomProps) {
+export function PokerRoom({ currentUser, room, participants, votes, roomState, onLeave }: PokerRoomProps) {
   const isPM = currentUser.role === 'PM';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Header currentUser={currentUser} onLeave={onLeave} />
+      <Header currentUser={currentUser} room={room} participants={participants} onLeave={onLeave} />
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         <ParticipantsList
